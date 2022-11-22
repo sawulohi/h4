@@ -1,5 +1,8 @@
 # h4 Omat komennot
 
+Testaukset tehty VirtualBoxin (Version 6.1.26 r145957 (Qt5.6.2)) kautta Ubuntu 22.04 LTS sekä Debian 11 (Bullseye)-distroilla. Prosessorina Intel(R) Core(TM) i7-8700K CPU @ 3.70GHz
+
+
 ## a) Hei komento! Tee järjestelmään uusi "hei maailma" -komento ja asenna se orjille Saltilla. Liitä raporttiisi orjan 'ls -l /usr/local/bin/' tulosteesta ainakin se rivi, jolla näkyy uuden komentotiedostosi oikeudet.
 
 Aloitin tekemällä kotihakemistooni kansion `scripts`, ja sinne tiedoston `heimaailma.sh`:
@@ -124,3 +127,162 @@ Salt lupasi tehneensä muutokset, tarkastin etukäteen yhdellä orjalla skriptin
 ![multiple scripts to minions with salt](8.png)
 
 Kaikki kolme skriptiä toimi! (Toki heimaailma.sh oli säädetty toimimaan jo aiemmin, mutta se toimi jatkossakin)
+
+## e) Intel. Etsi kolme loppuprojektia joltain vanhalta kurssitoteutukselta. Kuvaile projektit tiiviisti, viittaa ja linkitä alkuperäiseeen raporttin. Tässä alakohdassa ei tarvitse vielä kokeilla mitään koneella, vaan voit kuvailla niitä oheismateriaalin perusteella.
+
+### [Sanna Jyrinki: Django tuotantoympäristö SaltStackilla](https://github.com/jyrinsan/hh_saltproject)
+
+* [Django](https://www.djangoproject.com/) on avoimen lähdekoodin tuotantoympäristö.
+* Moduuli asentaa Djangon, apachen, tulimuurin, postgresql-tietokannan sekä pienempiä sovelluksia:
+      - micro
+      - bash-completion
+      - pwgen
+      - tree
+      - curl
+* Nykyversio käyttää sqlite3-kantaa, joka ilmeisesti tulee djangon mukana vakiona
+* Sisältää myös asetuksien säätöä ufw-tulimuurille, apachelle ja djangolle
+
+### [Caius Juvonen: PyChess SaltStackilla]
+
+* Moduuli asentaa PyChessin orjille ja säätää oletusasetuksista pois turhat helpotukset
+* Sisältää hyvän ohjeen findin käyttöön säätöjen tekemistä varten
+* Lisää myös peliin oman custom-äänen
+
+### [Visual Boy Advanced (Miko Hirvelä)](https://github.com/mikohir/Palvelinten-hallinta/blob/main/H7.md)
+
+* Asentaa Visual Boy Advanced-emulaattorin Saltilla
+* Asentaa käyttöjärjestelmän mukaan eri ROMit Pokemon-peleistä
+* Tekee muutoksia oletusnäppäimiin
+
+## e) Lukua, ei luottamusta. Kokeile yhtä kohdassa d-Intel löytämääsi modulia koneella. Tämä on infraa koodina, joten luottamusta ei tarvita. Voit lukea koodista, mitä olet ajamassa.
+
+Ajoin Sanna Jyringin moduulin. Vaikka Django itsessään ei ollut itselleni kiinnostava, moduuli oli mielenkiintoinen ihan pienempienkin ohjelmien vuoksi (tree, curl, pwgen). Esimerkiksi masterillanikaan ei ollut curlia asennettuna ennen moduulin testausta. Huomasin koodia lukiessa, että appsit-hakemiston init.sls ei kuitenkaan asentanut luvattua curlia. Lisäsin sen init.sls-tiedostoon. En myöskään halunnut asentaa djangoa tai muuttaa tulimuurini asetuksia, joten kommentoin ne ulos top.sls-tiedostosta.
+
+		~$ git clone git@github.com:jyrinsan/hh_saltproject.git
+		~$ sudo cp -r ~/hh_saltproject/srv/salt/ /srv/
+		$ sudo salt '*' state.apply
+		$ sudoedit /srv/salt/appsit/init.sls
+		appsit:
+		  pkg.installed:
+		    - pkgs:
+		      - micro
+		      - bash-completion
+		      - pwgen
+		      - tree
+		      - curl
+		      
+		$ sudoedit /srv/salt/top.sls
+		base:
+		  '*':
+		    - appsit
+		#    - firewall
+		    - postgresql
+		    - apache
+		#    - django
+		#    - djangoproject
+		    - crmapp
+
+		$ sudo salt '*' state.apply
+
+		good_boy:
+		----------
+		          ID: appsit
+		    Function: pkg.installed
+		      Result: True
+		     Comment: The following packages were installed/updated: curl
+		              The following packages were already installed: micro, bash-completion, pwgen, tree
+		     Started: 20:49:40.641528
+		    Duration: 13117.057 ms
+		     Changes:   
+		              ----------
+		              curl:
+		                  ----------
+		                  new:
+		                      7.81.0-1ubuntu1.6
+		                  old:
+		----------
+		          ID: postgresql
+		    Function: pkg.installed
+		      Result: True
+		     Comment: All specified packages are already installed
+		     Started: 20:49:53.762767
+		    Duration: 853.363 ms
+		     Changes:   
+		----------
+		          ID: postgresql.service
+		    Function: service.running
+		      Result: True
+		     Comment: The service postgresql.service is already running
+		     Started: 20:49:54.617065
+		    Duration: 15.028 ms
+		     Changes:   
+		----------
+		          ID: apache2
+		    Function: pkg.installed
+		      Result: True
+		     Comment: All specified packages are already installed
+		     Started: 20:49:54.632232
+		    Duration: 13.311 ms
+		     Changes:   
+		----------
+		          ID: /var/www/html/index.html
+		    Function: file.managed
+		      Result: True
+		     Comment: File /var/www/html/index.html is in the correct state
+		     Started: 20:49:54.647072
+		    Duration: 22.292 ms
+		     Changes:   
+		----------
+		          ID: /etc/apache2/mods-enabled/userdir.conf
+		    Function: file.symlink
+		      Result: True
+		     Comment: Symlink /etc/apache2/mods-enabled/userdir.conf is present and owned by root:root
+		     Started: 20:49:54.669491
+		    Duration: 1.545 ms
+		     Changes:   
+		----------
+		          ID: /etc/apache2/mods-enabled/userdir.load
+		    Function: file.symlink
+		      Result: True
+		     Comment: Symlink /etc/apache2/mods-enabled/userdir.load is present and owned by root:root
+		     Started: 20:49:54.671143
+		    Duration: 1.383 ms
+		     Changes:   
+		----------
+		          ID: apache2.service
+		    Function: service.running
+		      Result: True
+		     Comment: The service apache2.service is already running
+		     Started: 20:49:54.673350
+		    Duration: 14.495 ms
+		     Changes:   
+		----------
+		          ID: /home/django/publicwsgi/myapp/db.sqlite3
+		    Function: file.managed
+		      Result: True
+		     Comment: File /home/django/publicwsgi/myapp/db.sqlite3 is in the correct state
+		     Started: 20:49:54.687960
+		    Duration: 10.421 ms
+		     Changes:   
+		----------
+		          ID: /home/django/publicwsgi/myapp/crm
+		    Function: file.recurse
+		      Result: True
+		     Comment: The directory /home/django/publicwsgi/myapp/crm is in the correct state
+		     Started: 20:49:54.698508
+		    Duration: 144.371 ms
+		     Changes:   
+		
+		Summary for good_boy
+		-------------
+		Succeeded: 10 (changed=1)
+		Failed:     0
+		-------------
+		Total states run:     10
+		Total run time:   14.193 s
+
+Tilan ajaminen onnistui. Testasin toimivuutta tarkistamalla curlin ja apachen toimivuuden orjalla
+
+![curl & apache on minion](9.png)
+
+"Tervetuloa Sannan Apachen Testisivulle" vaikuttaa lupaavasti siltä, että ainakin curl ja apachen testisivu on säädetty onnistuneesti.
