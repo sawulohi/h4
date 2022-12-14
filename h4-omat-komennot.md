@@ -142,7 +142,7 @@ Kaikki kolme skriptiä toimi! (Toki heimaailma.sh oli säädetty toimimaan jo ai
 * Nykyversio käyttää sqlite3-kantaa, joka ilmeisesti tulee djangon mukana vakiona
 * Sisältää myös asetuksien säätöä ufw-tulimuurille, apachelle ja djangolle
 
-### [Caius Juvonen: PyChess SaltStackilla]
+### [Caius Juvonen: PyChess SaltStackilla](https://caiusinfo.data.blog/2020/05/19/palvelinten-hallinta-laksyt-viikko-7-caius-juvonen/)
 
 * Moduuli asentaa PyChessin orjille ja säätää oletusasetuksista pois turhat helpotukset
 * Sisältää hyvän ohjeen findin käyttöön säätöjen tekemistä varten
